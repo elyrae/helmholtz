@@ -8,6 +8,8 @@ namespace helmholtz {
 
     void jacobi(LinearMatrix& grid, const ddFunction lamb, const ddFunction k, const ddFunction Q, 
                 const double err = 1.0E-4, const size_t max_iterations = 100);
+    void seidel(LinearMatrix& m, const ddFunction lamb, const ddFunction k, const ddFunction Q, 
+                const double err = 1.0E-4, const size_t max_iterations = 100);
 }
 
 #endif
