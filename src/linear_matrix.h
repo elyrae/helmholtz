@@ -1,4 +1,8 @@
+#ifndef LINEAR_MATRIX_H
+#define LINEAR_MATRIX_H
+
 #include <vector>
+#include <cstddef>
 
 class LinearMatrix {
     size_t matrix_rows;    
@@ -18,3 +22,5 @@ public:
             v[i] = 0.0;   
     }
 };
+
+#endif
