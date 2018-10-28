@@ -85,13 +85,13 @@ double exact_solution(const size_t i, const size_t j, const double h) {
     return (1.0 - x)*x*std::sin(M_PI * y);
 }
 
-double max_error(const LinearMatrix& res) {
+double max_error(const LinearMatrix& m) {
     const double h = 1.0 / double(res.size() - 1);
     double max = 0.0;
-    for (size_t i = 1; i < res.rows() - 1;    ++i)
-    for (size_t j = 1; j < res.columns() - 1; ++j)
-        if (fabs(res(i, j) - exact_solution(i, j, h)) > max)
-            max = fabs(res(i, j) - exact_solution(i, j, h));
+    for (size_t i = 1; i < m.rows()    - 1; ++i)
+    for (size_t j = 1; j < m.columns() - 1; ++j)
+        if (fabs(m(i, j) - exact_solution(i, j, h)) > max)
+            max = fabs(m(i, j) - exact_solution(i, j, h));
     return max;
 }
 
@@ -99,7 +99,8 @@ int main() {
     const size_t N = 20;
     LinearMatrix result(N, N);
 
-    helmholtz::seidel(result, lamb, k, Q, 1.0E-4, 200);
+    helmholtz::jacobi(result, lamb, k, Q, 1.0E-4, 100);
+
     //std::cout << "max error sequential: " << max_error(result) << "\n";
 
     // double start_sequential = omp_get_wtime();

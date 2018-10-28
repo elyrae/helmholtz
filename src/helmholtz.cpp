@@ -1,7 +1,22 @@
 #include "helmholtz.h"
 
 #include <iostream>
+#include <fstream>
 #include <cmath>
+
+void helmholtz::writeMatrix(const LinearMatrix& grid, const double h, const std::string& filename)
+{
+    std::ofstream out(filename);
+
+    double x = 0.0, y = 0.0;
+    for (size_t i = 0; i < grid.rows()   ; ++i)
+    for (size_t j = 0; j < grid.columns(); ++j) {
+        x = j*h;
+        y = 1.0 - i*h;
+
+        out << x << " " << y << " " << grid(i, j) << "\n";
+    }
+}
 
 void helmholtz::jacobi(LinearMatrix& m, const ddFunction lamb, const ddFunction k, const ddFunction Q, 
                        const double err, const size_t max_iterations) 
@@ -37,7 +52,10 @@ void helmholtz::jacobi(LinearMatrix& m, const ddFunction lamb, const ddFunction 
            m(i, j) = next(i, j);
         }
 
-        std::cout << diff << std::endl;
+        // std::cout << iteration << ": " << diff << std::endl;
+        if (iteration < 10) {
+            helmholtz::writeMatrix(next, h, std::to_string(iteration + 1) + ".txt");
+        }
 
         iteration++;
     } while ( (diff > err) && (iteration < max_iterations) );
