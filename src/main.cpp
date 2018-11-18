@@ -47,7 +47,7 @@ double Q(const double x, const double y) {
 // }
 
 int main() {
-    const size_t N = 200;
+    const size_t N = 160;
     // const double h = 1.0 / double(N - 1);
     LinearMatrix m(N, N);
 
@@ -66,7 +66,7 @@ int main() {
     // helmholtz::jacobi(m, lamb, k, Q, 1.0E-4, 1);
 
     // helmholtz::jacobi(m, lamb, k, Q, 1.0E-4, 1000);
-    helmholtz::jacobiThirdBoundary(m, lamb, k, Q, 1.0E-4, 20000);
+    helmholtz::jacobiThirdBoundary(m, lamb, k, Q, 1.0E-4, 50000);
 
     return 0;
 }
