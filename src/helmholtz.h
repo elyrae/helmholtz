@@ -18,8 +18,8 @@ namespace helmholtz {
 
     void jacobi(LinearMatrix& m, const ddFunction lamb, const ddFunction k, const ddFunction Q, 
                 const double err = 1.0E-4, const size_t max_iterations = 100);
-    void jacobiThirdBoundaryKind(LinearMatrix& m, const ddFunction lamb, const ddFunction k, const ddFunction Q, 
-                                 const double err = 1.0E-4, const size_t max_iterations = 100);
+    void jacobiThirdBoundary(LinearMatrix& m, const ddFunction lamb, const ddFunction k, const ddFunction Q, 
+                             const double err = 1.0E-4, const size_t max_iterations = 100);
 
 
 	// void jacobiThirdBoundaryKind(LinearMatrix& m, const ddFunction lamb, const ddFunction k, const ddFunction Q, 

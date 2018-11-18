@@ -19,9 +19,8 @@ double k(const double, const double)
 }
 
 double Q(const double x, const double y) {
-    return (-2*(2399 - 5000*x + 5000*pow(x,2) - 5000*y + 5000*pow(y,2)))/pow(M_E,50*(pow(-0.5 + x,2) + pow(-0.5 + y,2)));
-
-    // return (-19598.0 + 40000.0*x - 40000.0*pow(x,2.0) + 40000.0*y - 40000.0*pow(y,2.0))/pow(M_E,50*(1.0 - 2.0*x + 2.0*pow(x,2.0) - 2.0*y + 2.0*pow(y,2.0)));
+    return -2*pow(-1 + y,2)*pow(y,2) + 12*x*pow(-1 + y,2)*pow(y,2) - 4*pow(x,3)*(-1 + 6*y - 5*pow(y,2) - 2*pow(y,3) + pow(y,4)) + 
+   2*pow(x,4)*(-1 + 6*y - 5*pow(y,2) - 2*pow(y,3) + pow(y,4)) - 2*pow(x,2)*(1 - 6*y + 11*pow(y,2) - 10*pow(y,3) + 5*pow(y,4));
 
     // return -2*pow(-1 + y,2)*pow(y,2) + 12*x*pow(-1 + y,2)*pow(y,2) - 4*pow(x,3)*(-1 + 6*y - 5*pow(y,2) - 2*pow(y,3) + pow(y,4)) + 
     // 2*pow(x,4)*(-1 + 6*y - 5*pow(y,2) - 2*pow(y,3) + pow(y,4)) - 2*pow(x,2)*(1 - 6*y + 11*pow(y,2) - 10*pow(y,3) + 5*pow(y,4));   
@@ -48,7 +47,7 @@ double Q(const double x, const double y) {
 // }
 
 int main() {
-    const size_t N = 100;
+    const size_t N = 200;
     // const double h = 1.0 / double(N - 1);
     LinearMatrix m(N, N);
 
@@ -67,7 +66,7 @@ int main() {
     // helmholtz::jacobi(m, lamb, k, Q, 1.0E-4, 1);
 
     // helmholtz::jacobi(m, lamb, k, Q, 1.0E-4, 1000);
-    helmholtz::jacobiThirdBoundaryKind(m, lamb, k, Q, 1.0E-4, 10000);
+    helmholtz::jacobiThirdBoundary(m, lamb, k, Q, 1.0E-4, 20000);
 
     return 0;
 }
