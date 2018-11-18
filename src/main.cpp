@@ -7,120 +7,67 @@
 #include "helmholtz.h"
 #include "linear_matrix.h"
 
-// const int threads = 2;
-
-// void seidel_iterations_parallel(LinearMatrix& res, const sourceFunction F, const double h, const double k, 
-//                                 const double err = 1.0E-4, const size_t max_iterations = 100) {
-//     LinearMatrix next(res.rows(), res.columns());
-
-//     size_t iteration = 0;
-//     double diff = 0.0;
-//     do {
-//         #pragma omp parallel for num_threads(threads)
-//         for (size_t i = 1;           i < res.rows()    - 1; i = i + 1)
-//         for (size_t j = 1 + (i % 2); j < res.columns() - 1; j = j + 2)
-//             next(i, j) = ( F(j*h, 1.0 - i*h, k)*h*h + res(i + 1, j) + res(i - 1, j) + res(i, j - 1) + res(i, j + 1) ) / (4.0 + h*h*k*k);
-
-//         #pragma omp parallel for num_threads(threads)
-//         for (size_t i = 1;                 i < res.rows()    - 1; i = i + 1)
-//         for (size_t j = 1 + ((i - 1) % 2); j < res.columns() - 1; j = j + 2)
-//             next(i, j) = ( F(j*h, 1.0 - i*h, k)*h*h + next(i + 1, j) + next(i - 1, j) + next(i, j - 1) + next(i, j + 1) ) / (4.0 + h*h*k*k);
-
-//         diff = 0.0;
-//         #pragma omp parallel for num_threads(threads) reduction(max : diff)
-//         for (size_t i = 1; i < res.rows() - 1; ++i)
-//             for (size_t j = 1; j < res.columns() - 1; ++j) {
-//                 if (fabs(next(i, j) - res(i, j)) > diff)
-//                     diff = fabs(res(i, j) - next(i, j));
-
-//                 res(i, j) = next(i, j);
-//             }
-
-//         iteration = iteration + 1;
-//     } while ( (diff > err) && (iteration < max_iterations) );
-// }
-
-// void jacobi_iterations_parallel(LinearMatrix& res, const sourceFunction F, const double h, const double k, 
-//                                 const double err = 1.0E-4, const size_t max_iterations = 100) {
-//     LinearMatrix next(res.rows(), res.columns());
-
-//     size_t iteration = 0;
-//     double diff = 0.0;
-//     do {
-//         #pragma omp parallel for num_threads(threads)
-//         for (size_t i = 1; i < res.rows()    - 1; ++i)
-//         for (size_t j = 1; j < res.columns() - 1; ++j)
-//             next(i, j) = ( F(j*h, 1.0 - i*h, k)*h*h + res(i + 1, j) + res(i - 1, j) + res(i, j - 1) + res(i, j + 1) ) / ( 4.0 + h*h*k*k );
-
-//         diff = 0.0;
-//         #pragma omp parallel for num_threads(threads) reduction(max : diff)
-//         for (size_t i = 1; i < res.rows()    - 1; ++i)
-//             for (size_t j = 1; j < res.columns() - 1; ++j) {
-//                 if (fabs(next(i, j) - res(i, j)) > diff)
-//                     diff = fabs(res(i, j) - next(i, j));
-
-//                 res(i, j) = next(i, j);
-//             }
-
-//         iteration = iteration + 1;
-//     } while ( (diff > err) && (iteration < max_iterations) );
-// }
-
-double lamb(const double, const double)
+double lamb(const double x, const double)
 {
+    // return 1.0 + x;
     return 1.0;
 }
 
 double k(const double, const double)
 {
-    return 4.0;
+    return 2.0;
 }
 
 double Q(const double x, const double y) {
-    return 2.0*std::sin(M_PI * y) + k(x, y)*(1.0 - x)*x*std::sin(M_PI * y) + M_PI*M_PI*(1 - x)*x*std::sin(M_PI*y);
+    return (-2*(2399 - 5000*x + 5000*pow(x,2) - 5000*y + 5000*pow(y,2)))/pow(M_E,50*(pow(-0.5 + x,2) + pow(-0.5 + y,2)));
+
+    // return (-19598.0 + 40000.0*x - 40000.0*pow(x,2.0) + 40000.0*y - 40000.0*pow(y,2.0))/pow(M_E,50*(1.0 - 2.0*x + 2.0*pow(x,2.0) - 2.0*y + 2.0*pow(y,2.0)));
+
+    // return -2*pow(-1 + y,2)*pow(y,2) + 12*x*pow(-1 + y,2)*pow(y,2) - 4*pow(x,3)*(-1 + 6*y - 5*pow(y,2) - 2*pow(y,3) + pow(y,4)) + 
+    // 2*pow(x,4)*(-1 + 6*y - 5*pow(y,2) - 2*pow(y,3) + pow(y,4)) - 2*pow(x,2)*(1 - 6*y + 11*pow(y,2) - 10*pow(y,3) + 5*pow(y,4));   
+
+    // return 10.0;
+    //return -1.0 - 10.0*x + 4.0*x*x - 4.0*y + 4.0*y*y;
+    // return -2.0 - 4.0*x + 4.0*x*x - 4.0*y + 4.0*y*y;
+    // return 2.0*std::sin(M_PI * y) + k(x, y)*(1.0 - x)*x*std::sin(M_PI * y) + M_PI*M_PI*(1 - x)*x*std::sin(M_PI*y);
 }
 
-double exact_solution(const size_t i, const size_t j, const double h) {
-    const double x = j*h, y = 1.0 - i*h;
-    return (1.0 - x)*x*std::sin(M_PI * y);
-}
+// double exact_solution(const size_t i, const size_t j, const double h) {
+//     const double x = j*h, y = 1.0 - i*h;
+//     return (1.0 - x)*x*std::sin(M_PI * y);
+// }
 
-double max_error(const LinearMatrix& m) {
-    const double h = 1.0 / double(res.size() - 1);
-    double max = 0.0;
-    for (size_t i = 1; i < m.rows()    - 1; ++i)
-    for (size_t j = 1; j < m.columns() - 1; ++j)
-        if (fabs(m(i, j) - exact_solution(i, j, h)) > max)
-            max = fabs(m(i, j) - exact_solution(i, j, h));
-    return max;
-}
+// double max_error(const LinearMatrix& m) {
+//     const double h = 1.0 / double(m.size() - 1);
+//     double max = 0.0;
+//     for (size_t i = 1; i < m.rows()    - 1; ++i)
+//     for (size_t j = 1; j < m.columns() - 1; ++j)
+//         if (fabs(m(i, j) - exact_solution(i, j, h)) > max)
+//             max = fabs(m(i, j) - exact_solution(i, j, h));
+//     return max;
+// }
 
 int main() {
-    const size_t N = 20;
-    LinearMatrix result(N, N);
+    const size_t N = 100;
+    // const double h = 1.0 / double(N - 1);
+    LinearMatrix m(N, N);
 
-    helmholtz::jacobi(result, lamb, k, Q, 1.0E-4, 100);
+    // double x = 0.0, y = 0.0;
+    for (size_t i = 0; i < m.rows(); ++i) {
+        // x = i*h;
+        // y = i*h;
 
-    //std::cout << "max error sequential: " << max_error(result) << "\n";
+        m(0,            i) = 0.0; // 0.5 - y + y*y;
+        m(m.size() - 1, i) = 0.0; // 0.5 - y + y*y;
+        m(i,            0) = 0.0; // 0.5 - x + x*x;
+        m(i, m.size() - 1) = 0.0; // 0.5 - x + x*x; 
+    }
 
-    // double start_sequential = omp_get_wtime();
-    // seidel_iterations_linear(result, source, h, k, 1.0E-7, 20000);
-    // //jacobi_iterations_linear(result, source, h, k, 1.0E-7, 20000);
-    // double end_sequential   = omp_get_wtime();
-    // std::cout << "max error sequential: " << max_error(result, h) << "\n";
+    // helmholtz::writeMatrix(m, "0.txt");
+    // helmholtz::jacobi(m, lamb, k, Q, 1.0E-4, 1);
 
-    // result.fillZero();
+    // helmholtz::jacobi(m, lamb, k, Q, 1.0E-4, 1000);
+    helmholtz::jacobiThirdBoundaryKind(m, lamb, k, Q, 1.0E-4, 10000);
 
-    // double start_parallel = omp_get_wtime();
-    // seidel_iterations_parallel(result, source, h, k, 1.0E-7, 10000);
-    // //jacobi_iterations_parallel(result, source, h, k, 1.0E-7, 20000);
-    // double end_parallel   = omp_get_wtime();
-    // std::cout << "max error parallel:   " << max_error(result, h) << "\n";
-
-    // const double acceleration = (end_sequential - start_sequential) / (end_parallel - start_parallel);
-    // std::cout << std::endl;
-    // std::cout << "sequential algorithm:      " << (end_sequential - start_sequential) << std::endl;
-    // std::cout << "parallel algorithm:        " << (end_parallel - start_parallel) << std::endl;
-    // std::cout << "acceleration (efficiency): " << acceleration << " (" << (acceleration / threads) << ")" << std::endl;
     return 0;
 }
