@@ -73,6 +73,84 @@ double exact(const double x, const double y)
     return exp(-50.0 * ( (x - 0.5)*(x - 0.5) + (y - 0.5)*(y - 0.5) ));
 }
 
+void seidel_step(const size_t i, const size_t j, 
+                 LinearMatrix& next, LinearMatrix& m, 
+                 const helmholtz::ddFunction lamb, 
+                 const helmholtz::ddFunction k, 
+                 const helmholtz::ddFunction Q)
+{
+    double h = 1.0 / double(m.size() - 1);
+    double x = i*h;
+    double y = j*h;
+
+    double a_x_forw = (i != (m.rows() - 1)   )*lamb(x + h/2.0, y        );
+    double a_x_back = (i != 0                )*lamb(x - h/2.0, y        );
+    double a_y_forw = (j != (m.columns() - 1))*lamb(x,         y + h/2.0);
+    double a_y_back = (j != 0                )*lamb(x,         y - h/2.0);
+
+    // ===========================================================
+    // внутренняя часть области
+    if ((0 < i) && (i < (m.rows() - 1)) && (0 < j) && (j < (m.columns() - 1)))
+        next(i, j) = (Q(x, y)*h*h + m(i + 1, j)*a_x_forw 
+                                  + m(i - 1, j)*a_x_back 
+                                  + m(i, j + 1)*a_y_forw 
+                                  + m(i, j - 1)*a_y_back) / (a_x_forw + a_x_back + a_y_forw + a_y_back + k(x, y)*h*h);
+
+    // ===========================================================
+    // левая граница без угловых точек
+    if ((i == 0) && (0 < j) && (j < (m.columns() - 1)))
+        next(i, j) = (Q(x, y)*h*h*0.5 + m(i + 1, j)*a_x_forw 
+                                      + m(i, j + 1)*a_y_forw*0.5 
+                                      + m(i, j - 1)*a_y_back*0.5) 
+                     / (a_x_forw + 1.5*k(x, y)*lamb(x, y)*h + 0.5*a_y_forw + 0.5*a_y_back + k(x, y)*h*h*0.5);
+
+    // правая граница без угловых точек
+    if ((i == (m.rows() - 1)) && (0 < j) && (j < (m.columns() - 1)))
+        next(i, j) = (Q(x, y)*h*h*0.5 + m(i - 1, j)*a_x_back 
+                                      + m(i, j + 1)*a_y_forw*0.5 
+                                      + m(i, j - 1)*a_y_back*0.5) 
+                      / (1.5*k(x, y)*lamb(x, y)*h + a_x_back + 0.5*a_y_forw + 0.5*a_y_back + k(x, y)*h*h*0.5);
+
+    // верхняя граница без угловых точек
+    if ((0 < i) && (i < (m.rows() - 1)) && (j == (m.columns() - 1)))
+        next(i, j) = (Q(x, y)*h*h*0.5 + m(i + 1, j)*a_x_forw*0.5 
+                                      + m(i - 1, j)*a_x_back*0.5 
+                                      + m(i, j - 1)*a_y_back) 
+                      / (0.5*a_x_forw + 0.5*a_x_back + 1.5*k(x, y)*lamb(x, y)*h + a_y_back + k(x, y)*h*h*0.5);
+
+    // нижняя граница без угловых точек
+    if ((0 < i) && (i < (m.rows() - 1)) && (j == 0))
+        next(i, j) = (Q(x, y)*h*h*0.5 + m(i + 1, j)*a_x_forw*0.5 
+                                      + m(i - 1, j)*a_x_back*0.5 
+                                      + m(i, j + 1)*a_y_forw) 
+                      / (0.5*a_x_forw + 0.5*a_x_back + a_y_forw + 1.5*k(x, y)*lamb(x, y)*h + k(x, y)*h*h*0.5);
+
+    // ===========================================================                  
+    // левый верхний угол
+    if ((i == 0) && (j == (m.columns() - 1)))
+        next(i, j) = (Q(x, y)*h*h*0.5 + m(i + 1, j)*a_x_forw 
+                                      + m(i, j - 1)*a_y_back)
+                      / (a_x_forw + 1.5*k(x, y)*lamb(x, y)*h + 1.5*k(x, y)*lamb(x, y)*h + a_y_back + k(x, y)*h*h*0.5);
+
+    // левый нижний угол
+    if ((i == 0) && (j == 0))
+        next(i, j) = (Q(x, y)*h*h*0.5 + m(i + 1, j)*a_x_forw  
+                                      + m(i, j + 1)*a_y_forw) 
+                      / (a_x_forw + 1.5*k(x, y)*lamb(x, y)*h + a_y_forw + 1.5*k(x, y)*lamb(x, y)*h + k(x, y)*h*h*0.5);
+
+    // правый верхний угол
+    if ((i == (m.rows() - 1)) && (j == (m.columns() - 1)))
+        next(i, j) = (Q(x, y)*h*h*0.5 + m(i - 1, j)*a_x_back 
+                                      + m(i, j - 1)*a_y_back) 
+                      / (1.5*k(x, y)*lamb(x, y)*h + a_x_back + 1.5*k(x, y)*lamb(x, y)*h + a_y_back + k(x, y)*h*h*0.5); 
+
+    // правый нижний угол
+    if ((i == (m.rows() - 1)) && (j == 0)) 
+        next(i, j) = (Q(x, y)*h*h*0.5 + m(i - 1, j)*a_x_back 
+                                      + m(i, j + 1)*a_y_forw) 
+                      / (1.5*k(x, y)*lamb(x, y)*h + a_x_back + a_y_forw + 1.5*k(x, y)*lamb(x, y)*h + k(x, y)*h*h*0.5);
+}
+
 void helmholtz::jacobiThirdBoundary(LinearMatrix& m, const ddFunction lamb, const ddFunction k, const ddFunction Q, 
                                     const double err, const size_t max_iterations) 
 {
@@ -228,14 +306,6 @@ void helmholtz::jacobiThirdBoundary(LinearMatrix& m, const ddFunction lamb, cons
                               / (1.5*k(x, y)*lamb(x, y)*h + a_x_back + a_y_forw + 1.5*k(x, y)*lamb(x, y)*h + k(x, y)*h*h*0.5);
         }
 
-        // diff = 0.0;
-        // for (size_t i = 1; i < m.rows()    - 1; ++i)
-        // for (size_t j = 1; j < m.columns() - 1; ++j) {
-        //     // if (fabs(next(i*h, j*h) - exact(x, y)) > diff)
-        //     //   diff = fabs(next(i*h, j*h) - exact(x, y));
-
-        //     m(i, j) = next(i, j);
-        // }
         m.swap(next);
 
         iteration++;
@@ -243,10 +313,6 @@ void helmholtz::jacobiThirdBoundary(LinearMatrix& m, const ddFunction lamb, cons
         // if ( (iteration % 500) == 0 ) {
         //     helmholtz::writeMatrix(next, std::to_string(iteration) + ".txt");
         // }
-
-        // printf("%.15f\n", diff);
-
-        //iteration++;
     } while ( /*(diff > err) &&*/ (iteration < max_iterations) );
 
     helmholtz::writeMatrix(m, "out_conv.txt");
