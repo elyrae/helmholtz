@@ -42,7 +42,7 @@ double Q(const double x, const double y) {
 // }
 
 int main() {
-    const size_t N = 100;
+    const size_t N = 50;
     // const double h = 1.0 / double(N - 1);
     LinearMatrix m(N, N);
 
@@ -61,7 +61,12 @@ int main() {
     // helmholtz::jacobi(m, lamb, k, Q, 1.0E-4, 1);
 
     // helmholtz::jacobi(m, lamb, k, Q, 1.0E-4, 1000);
-    helmholtz::jacobiThirdBoundary(m, lamb, k, Q, 1.0E-4, 10000);
+
+    double start = omp_get_wtime();
+    helmholtz::seidel_third_boundary(m, lamb, k, Q, 1.0E-4, 10000);
+    double end = omp_get_wtime();
+
+    printf("Time: %f s\n", end - start);
 
     return 0;
 }
