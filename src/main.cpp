@@ -57,11 +57,6 @@ int main() {
         m(i, m.size() - 1) = 0.0; // 0.5 - x + x*x; 
     }
 
-    // helmholtz::writeMatrix(m, "0.txt");
-    // helmholtz::jacobi(m, lamb, k, Q, 1.0E-4, 1);
-
-    // helmholtz::jacobi(m, lamb, k, Q, 1.0E-4, 1000);
-
     double start = omp_get_wtime();
     helmholtz::seidel_third_boundary(m, lamb, k, Q, 1.0E-4, 10000);
     double end = omp_get_wtime();
