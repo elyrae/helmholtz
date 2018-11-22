@@ -44,7 +44,7 @@ double Q(const double x, const double y) {
 int main() {
     const size_t N = 50;
     // const double h = 1.0 / double(N - 1);
-    LinearMatrix m(N, N);
+    LinearMatrix m(N, N*2);
 
     // double x = 0.0, y = 0.0;
     for (size_t i = 0; i < m.rows(); ++i) {
@@ -58,7 +58,7 @@ int main() {
     }
 
     double start = omp_get_wtime();
-    helmholtz::seidel_third_boundary(m, lamb, k, Q, 1.0E-4, 10000);
+    helmholtz::seidel_third_boundary(m, lamb, k, Q, 1.0E-4, 1000);
     double end = omp_get_wtime();
 
     printf("Time: %f s\n", end - start);

@@ -94,7 +94,7 @@ void seidel_step(const size_t i, const size_t j, LinearMatrix& next, LinearMatri
                                     + m(i - 1, j)*a_x_back*hy_hx*hy_hx 
                                     + m(i, j + 1)*a_y_forw 
                                     + m(i, j - 1)*a_y_back) 
-                      / ((a_x_forw + a_x_back)*hy_hx + a_y_forw + a_y_back + k(x, y)*hy*hy);
+                      / ((a_x_forw + a_x_back)*hy_hx*hy_hx + a_y_forw + a_y_back + k(x, y)*hy*hy);
 
     // ===========================================================
     // левая граница без угловых точек
@@ -120,9 +120,9 @@ void seidel_step(const size_t i, const size_t j, LinearMatrix& next, LinearMatri
 
     // нижняя граница без угловых точек
     if ((0 < i) && (i < (m.rows() - 1)) && (j == 0))
-        next(i, j) = (Q(x, y)*h*h*0.5 + m(i + 1, 0)*a_x_forw*0.5 
-                                      + m(i - 1, 0)*a_x_back*0.5 
-                                      + m(i,     1)*a_y_forw*hx_hy*hx_hy) 
+        next(i, j) = (Q(x, y)*hx*hx*0.5 + m(i + 1, 0)*a_x_forw*0.5 
+                                        + m(i - 1, 0)*a_x_back*0.5 
+                                        + m(i,     1)*a_y_forw*hx_hy*hx_hy) 
                      / (0.5*a_x_forw + 0.5*a_x_back + a_y_forw*hx_hy*hx_hy + 1.5*k(x, y)*lamb(x, y)*hx*hx_hy + k(x, y)*hx*hx*0.5);
 
     // ===========================================================                  
@@ -174,6 +174,10 @@ void helmholtz::seidel_third_boundary(LinearMatrix& m, const ddFunction lamb, co
             {
                 m.swap(next);
                 iteration++;
+
+                if ( (iteration % 100) == 0 ) {
+                    helmholtz::write_matrix(next, std::to_string(iteration) + ".txt");
+                }                
             }
 
             // std::cout << iteration << ": " << diff << std::endl;
