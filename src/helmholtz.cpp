@@ -6,7 +6,7 @@
 
 const int THREADS = 4;
 
-void helmholtz::write_matrix(const LinearMatrix& grid, const std::string& filename)
+void helmholtz::write_matrix(const LinearMatrix &grid, const std::string &filename)
 {
     std::ofstream out(filename);
     for (size_t i = 0; i < grid.rows(); ++i) {
@@ -86,10 +86,15 @@ void seidel_step(const size_t i, const size_t j, LinearMatrix &next, const Linea
     const double lamb_ij = lamb(i, j);
     const double    q_ij = Q(i, j);
 
-    const double a_x_forw = (i != (m.rows() - 1)   )*(lamb(i + 1, j) + lamb(i, j)) / 2.0; // lamb(x + hx/2.0, y         );
-    const double a_x_back = (i != 0                )*(lamb(i - 1, j) + lamb(i, j)) / 2.0; // lamb(x - hx/2.0, y         );
-    const double a_y_forw = (j != (m.columns() - 1))*(lamb(i, j + 1) + lamb(i, j)) / 2.0; // lamb(x,          y + hy/2.0);
-    const double a_y_back = (j != 0                )*(lamb(i, j - 1) + lamb(i, j)) / 2.0; // lamb(x,          y - hy/2.0);
+    // const double a_x_forw = (i != (m.rows() - 1)   )*(lamb(i + 1, j) + lamb(i, j)) / 2.0; // lamb(x + hx/2.0, y         );
+    // const double a_x_back = (i != 0                )*(lamb(i - 1, j) + lamb(i, j)) / 2.0; // lamb(x - hx/2.0, y         );
+    // const double a_y_forw = (j != (m.columns() - 1))*(lamb(i, j + 1) + lamb(i, j)) / 2.0; // lamb(x,          y + hy/2.0);
+    // const double a_y_back = (j != 0                )*(lamb(i, j - 1) + lamb(i, j)) / 2.0; // lamb(x,          y - hy/2.0);
+
+    const double a_x_forw = (lamb(i + 1, j) + lamb(i, j)) / 2.0;
+    const double a_x_back = (lamb(i - 1, j) + lamb(i, j)) / 2.0;
+    const double a_y_forw = (lamb(i, j + 1) + lamb(i, j)) / 2.0;
+    const double a_y_back = (lamb(i, j - 1) + lamb(i, j)) / 2.0;
 
     // =========================================================== 
     // внутренняя часть области
@@ -164,35 +169,35 @@ void helmholtz::seidel_third_boundary(LinearMatrix& m,
     LinearMatrix next(m.rows(), m.columns());
 
     size_t iteration = 0;
-    #pragma omp parallel num_threads(THREADS)
-    {
+    // #pragma omp parallel num_threads(THREADS)
+    // {
         do {
-            #pragma omp for
+            // #pragma omp for
             for (size_t i = 1;           i < m.rows()    - 1; i = i + 1)
             for (size_t j = 1 + (i % 2); j < m.columns() - 1; j = j + 2)
                 seidel_step(i, j, next, m, lamb, k, Q);
 
-            #pragma omp for
+            // #pragma omp for
             for (size_t i = 1;                 i < m.rows()    - 1; i = i + 1)
             for (size_t j = 1 + ((i - 1) % 2); j < m.columns() - 1; j = j + 2)
                 seidel_step(i, j, next, next, lamb, k, Q);
 
-            #pragma omp single 
-            {
-                m.swap(next);
-                iteration++;
+            m.swap(next);
+            iteration++;
 
-                if ( (iteration % 100) == 0 ) {
-                    helmholtz::write_matrix(next, std::to_string(iteration) + ".txt");
-                }                
-            }
+            if ( (iteration % 100) == 0 )
+                helmholtz::write_matrix(next, std::to_string(iteration) + ".txt"); 
+
+            // #pragma omp single 
+            // {            
+            // }
 
             // std::cout << iteration << ": " << diff << std::endl;
-            // if ( (iteration % 500) == 0 ) {
-            //     helmholtz::writeMatrix(next, std::to_string(iteration) + ".txt");
-            // }
         } while ( /*(diff > err) &&*/ (iteration < max_iterations) );
-    }
+    // }
 
-    helmholtz::write_matrix(m, "out_conv.txt");
+    // std::string out_file = std::to_string(m.rows())       + "-" +
+    //                        std::to_string(m.columns())    + "-" + 
+    //                        std::to_string(max_iterations) + ".txt";
+    // helmholtz::write_matrix(m, out_file);
 }
