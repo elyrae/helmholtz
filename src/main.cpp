@@ -12,7 +12,7 @@
 double  kappa(const double, const double) { return 1.0; }
 double lambda(const double x, const double y) { return 1.0 / kappa(x, y); }
 double source(const double x, const double y) {
-    return   pow(M_E,-50*(pow(x,2) + pow(y,2))) - pow(M_E,-50*(pow(-1 + x,2) + pow(-1 + y,2)));
+    return   pow(M_E,-50*(pow(x,2) + pow(-0.5 + y,2)));
 }
 
 double k(const double T)
@@ -45,42 +45,46 @@ double cooling_function(const double rho, const double T)
     return pow(k(T)*log10(i*rho) + b(T), 10.0);
 }
 
-void fill_data(LinearMatrix &kappa, LinearMatrix &Q) 
+void fill_data(LinearMatrix &kappa_equ, LinearMatrix &lambda_equ, LinearMatrix &Q_equ) 
 {
     const std::string datafile = "dataLukin.dat";
     std::ifstream in(datafile);
+    std::ofstream out("calculated.txt");
 
-    const double sigma   = 5.67E-5;  // Erg / s / cm^s / K^4
-    const double R_sun   = 6.957E10; // cm
-    const double c       = 299792458.0 * 100.0; // cm / s 
+    const double sigma = 5.67E-5;             // Erg / s / cm^s / K^4
+    const double R_sun = 6.957E10;            // cm
+    const double c     = 299792458.0 * 100.0; // cm / s 
 
     const double L_scale = R_sun * 0.557727 * 1.38;
 
-    double x = 0.0, y = 0.0, rho = 0.0, T = 0.0, energy = 0.0;
-    for (size_t i = 0; i < 70; ++i)
-    for (size_t j = 0; j < 70; ++j) {
-        in >> x;
-        in >> y;
-        in >> rho;
-        in >> T;
-        in >> energy;
+    double x = 0.0, y = 0.0, rho = 0.0, T = 0.0, energy = 0.0, kap = 0.0;
+    for (size_t i = 0; i < 70; ++i) {
+        for (size_t j = 0; j < 70; ++j) {
+            in >> x;
+            in >> y;
+            in >> rho;
+            in >> T;
+            in >> energy;
 
-        if (rho < 1.0E-16) {
-            printf("(%d, %d): rho is too small. kappa = 0\n", i, j);
-            kappa(i, j) = 0.0;
+            if ((rho < 1.0E-16) || (T < 1000.0)) {
+                printf("(%d, %d): rho and T are too small. k = 0\n", i, j);
+                kappa_equ(i, j) = 0.0;
+                lambda_equ(i, j) = 1.0E12;
+                Q_equ(i, j) = 0.0;
 
-            continue;
-        }
-
-        if (T < 1000.0) {
-            printf("(%d, %d): T is too small. T = 0\n", i, j);
-            kappa(i, j) = 0.0;
-
-            continue;
-        }
+                out << 0.0 << " ";
+                continue;
+            }
         
-        kappa(i, j) = L_scale * cooling_function(rho, T) / (4.0*sigma*T*T*T*T);
-        printf("(%d, %d): k = %.12f\n", i, j, kappa(i, j));
+            kap = L_scale * cooling_function(rho, T) / (4.0*sigma*T*T*T*T);
+            kappa_equ(i, j)  = 3.0 * kap;
+            lambda_equ(i, j) = 1.0 / kap;
+            Q_equ(i, j) = (3.0 / c) * L_scale * L_scale * cooling_function(rho, T); 
+
+            printf("(%d, %d): k = %.6f, q = %.6f\n", i, j, kap, Q_equ(i, j));
+            out << cooling_function(rho, T) << " ";
+        }
+        out << "\n";
     }
 }
 
@@ -91,7 +95,7 @@ int main() {
     const double hy = 1.0 / double(NY - 1);
     LinearMatrix m(NX, NY), k(NX, NY), lamb(NX, NY), Q(NX, NY);
 
-    fill_data(k, Q);
+    fill_data(k, lamb, Q);
 
     // double x = 0.0, y = 0.0;
     // for (size_t i = 0; i < m.rows();    ++i)

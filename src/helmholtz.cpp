@@ -111,53 +111,53 @@ void seidel_step(const size_t i, const size_t j, LinearMatrix &next, const Linea
         next(i, j) = (q_ij*hy*hy*0.5 + m(1, j    )*a_x_forw*hy_hx*hy_hx 
                                      + m(0, j + 1)*a_y_forw*0.5 
                                      + m(0, j - 1)*a_y_back*0.5) 
-                     / (a_x_forw*hy_hx*hy_hx + 1.5*k_ij*lamb_ij*hy*hy_hx + 0.5*a_y_forw + 0.5*a_y_back + k_ij*hy*hy*0.5);
+                     / (a_x_forw*hy_hx*hy_hx + 0.5*k_ij*lamb_ij*hy*hy_hx + 0.5*a_y_forw + 0.5*a_y_back + k_ij*hy*hy*0.5);
 
     // правая граница без угловых точек
     if ((i == (m.rows() - 1)) && (0 < j) && (j < (m.columns() - 1)))
         next(i, j) = (q_ij*hy*hy*0.5 + m(i - 1, j)*a_x_back*hy_hx*hy_hx 
                                      + m(i, j + 1)*a_y_forw*0.5 
                                      + m(i, j - 1)*a_y_back*0.5) 
-                     / (a_x_back*hy_hx*hy_hx + 1.5*k_ij*lamb_ij*hy*hy_hx + 0.5*a_y_forw + 0.5*a_y_back + k_ij*hy*hy*0.5);
+                     / (a_x_back*hy_hx*hy_hx + 0.5*k_ij*lamb_ij*hy*hy_hx + 0.5*a_y_forw + 0.5*a_y_back + k_ij*hy*hy*0.5);
 
     // верхняя граница без угловых точек
     if ((0 < i) && (i < (m.rows() - 1)) && (j == (m.columns() - 1)))
         next(i, j) = (q_ij*hx*hx*0.5 + m(i + 1, j)*a_x_forw*0.5 
                                      + m(i - 1, j)*a_x_back*0.5 
                                      + m(i, j - 1)*a_y_back*hx_hy*hx_hy) 
-                     / (0.5*a_x_forw + 0.5*a_x_back + 1.5*k_ij*lamb_ij*hx*hx_hy + a_y_back*hx_hy*hx_hy + k_ij*hx*hx*0.5);
+                     / (0.5*a_x_forw + 0.5*a_x_back + 0.5*k_ij*lamb_ij*hx*hx_hy + a_y_back*hx_hy*hx_hy + k_ij*hx*hx*0.5);
 
     // нижняя граница без угловых точек
     if ((0 < i) && (i < (m.rows() - 1)) && (j == 0))
         next(i, j) = (q_ij*hx*hx*0.5 + m(i + 1, 0)*a_x_forw*0.5 
                                      + m(i - 1, 0)*a_x_back*0.5 
                                      + m(i,     1)*a_y_forw*hx_hy*hx_hy) 
-                     / (0.5*a_x_forw + 0.5*a_x_back + a_y_forw*hx_hy*hx_hy + 1.5*k_ij*lamb_ij*hx*hx_hy + k_ij*hx*hx*0.5);
+                     / (0.5*a_x_forw + 0.5*a_x_back + a_y_forw*hx_hy*hx_hy + 0.5*k_ij*lamb_ij*hx*hx_hy + k_ij*hx*hx*0.5);
 
     // ===========================================================                  
     // левый верхний угол +
     if ((i == 0) && (j == (m.columns() - 1)))
         next(i, j) = (q_ij*hy*hy*0.5 + m(1, j    )*a_x_forw*hy_hx*hy_hx 
                                      + m(0, j - 1)*a_y_back)
-                     / (a_x_forw*hy_hx*hy_hx + 1.5*k_ij*lamb_ij*hy + 1.5*k_ij*lamb_ij*hy*hy_hx + a_y_back + k_ij*hy*hy*0.5);
+                     / (a_x_forw*hy_hx*hy_hx + 0.5*k_ij*lamb_ij*hy + 0.5*k_ij*lamb_ij*hy*hy_hx + a_y_back + k_ij*hy*hy*0.5);
 
     // левый нижний угол +
     if ((i == 0) && (j == 0))
         next(i, j) = (q_ij*hy*hy*0.5 + m(1, 0)*a_x_forw*hy_hx*hy_hx  
                                      + m(0, 1)*a_y_forw) 
-                     / (a_x_forw*hy_hx*hy_hx + 1.5*k_ij*lamb_ij*hy + a_y_forw + 1.5*k_ij*lamb_ij*hy*hy_hx + k_ij*hy*hy*0.5);
+                     / (a_x_forw*hy_hx*hy_hx + 0.5*k_ij*lamb_ij*hy + a_y_forw + 0.5*k_ij*lamb_ij*hy*hy_hx + k_ij*hy*hy*0.5);
 
     // правый верхний угол +++
     if ((i == (m.rows() - 1)) && (j == (m.columns() - 1)))
         next(i, j) = (q_ij*hy*hy*0.5 + m(i - 1, j)*a_x_back*hy_hx*hy_hx 
                                      + m(i, j - 1)*a_y_back) 
-                     / (1.5*k_ij*lamb_ij*hy + a_x_back*hy_hx*hy_hx + 1.5*k_ij*lamb_ij*hy*hy_hx + a_y_back + k_ij*hy*hy*0.5); 
+                     / (0.5*k_ij*lamb_ij*hy + a_x_back*hy_hx*hy_hx + 0.5*k_ij*lamb_ij*hy*hy_hx + a_y_back + k_ij*hy*hy*0.5); 
 
     // правый нижний угол
     if ((i == (m.rows() - 1)) && (j == 0)) 
         next(i, j) = (q_ij*hy*hy*0.5 + m(i - 1, 0)*a_x_back*hy_hx*hy_hx 
                                      + m(i,     1)*a_y_forw) 
-                     / (1.5*k_ij*lamb_ij*hy + a_x_back*hy_hx*hy_hx + a_y_forw + 1.5*k_ij*lamb_ij*hy*hy_hx + k_ij*hy*hy*0.5);
+                     / (0.5*k_ij*lamb_ij*hy + a_x_back*hy_hx*hy_hx + a_y_forw + 0.5*k_ij*lamb_ij*hy*hy_hx + k_ij*hy*hy*0.5);
 }
 
 // void helmholtz::seidel_third_boundary(LinearMatrix& m, const ddFunction lamb, const ddFunction k, const ddFunction Q, 
