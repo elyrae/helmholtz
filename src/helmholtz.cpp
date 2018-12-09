@@ -64,10 +64,10 @@ void helmholtz::jacobi_first_boundary(LinearMatrix& m, const ddFunction lamb, co
     } while ( /*(diff > err) &&*/ (iteration < max_iterations) );
 }
 
-double exact(const double x, const double y)
-{
-    return exp(-50.0 * ( (x - 0.5)*(x - 0.5) + (y - 0.5)*(y - 0.5) ));
-}
+// double exact(const double x, const double y)
+// {
+//     return exp(-50.0 * ( (x - 0.5)*(x - 0.5) + (y - 0.5)*(y - 0.5) ));
+// }
 
 // void seidel_step(const size_t i, const size_t j, LinearMatrix& next, LinearMatrix& m, 
 //                  const helmholtz::ddFunction lamb, const helmholtz::ddFunction k, const helmholtz::ddFunction Q)
@@ -173,19 +173,19 @@ void helmholtz::seidel_third_boundary(LinearMatrix& m,
     // {
         do {
             // #pragma omp for
-            for (size_t i = 1;           i < m.rows()    - 1; i = i + 1)
-            for (size_t j = 1 + (i % 2); j < m.columns() - 1; j = j + 2)
+            for (size_t i = 0;           i < m.rows()   ; i = i + 1)
+            for (size_t j = 0 + (i % 2); j < m.columns(); j = j + 2)
                 seidel_step(i, j, next, m, lamb, k, Q);
 
             // #pragma omp for
-            for (size_t i = 1;                 i < m.rows()    - 1; i = i + 1)
-            for (size_t j = 1 + ((i - 1) % 2); j < m.columns() - 1; j = j + 2)
+            for (size_t i = 0;                 i < m.rows()   ; i = i + 1)
+            for (size_t j = 0 + ((i + 1) % 2); j < m.columns(); j = j + 2)
                 seidel_step(i, j, next, next, lamb, k, Q);
 
             m.swap(next);
             iteration++;
 
-            if ( (iteration % 100) == 0 )
+            if ( (iteration % 1000) == 0 )
                 helmholtz::write_matrix(next, std::to_string(iteration) + ".txt"); 
 
             // #pragma omp single 
