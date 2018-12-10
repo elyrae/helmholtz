@@ -17,32 +17,35 @@ double source(const double x, const double y) {
 
 double k(const double T)
 {
-    if (log10(T) < 3.65)
+    const double logT = log10(T);
+    if (logT < 3.65)
         return 1.0;
-    else if (log10(T) < 4.15)
-        return 2.0*log10(T) - 6.3;
+    else if (logT < 4.15)
+        return 2.0*logT - 6.3;
     else
         return 2.0;
 }
 
 double b(const double T)
 {
-    if (log10(T) < 3.325)
-        return 86.154*log10(T) - 286.46;
-    else if (log10(T) < 4.1)
-        return 33.226*log10(T) - 110.48;
-    else if (log10(T) < 5.25)
-        return -1.957*log10(T) + 33.77;
+    const double logT = log10(T);
+    if (logT < 3.325)
+        return 86.154*logT - 286.46;
+    else if (logT < 4.1)
+        return 33.226*logT - 110.48;
+    else if (logT < 5.25)
+        return -1.957*logT + 33.77;
     else
-        return 0.667*log10(T) + 20.0;
+        return  0.667*logT + 20.0;
 }
 
-double cooling_function(const double rho, const double T)
+double cooling_function(const double D, const double T)
 {
-    const double i = 1.0;
+    // const double i = 1.0;
 
     // lg L = k(T)*log10(i*rho) + b(T)
-    return pow(k(T)*log10(i*rho) + b(T), 10.0);
+    // return (k(T)*log10(D) + b(T))*log(10.0); // pow(k(T)*log10(i*rho) + b(T), 10.0);
+    return exp( (k(T)*log10(D) + b(T))*log(10.0) );
 }
 
 void fill_data(LinearMatrix &kappa_equ, LinearMatrix &lambda_equ, LinearMatrix &Q_equ) 
@@ -67,12 +70,12 @@ void fill_data(LinearMatrix &kappa_equ, LinearMatrix &lambda_equ, LinearMatrix &
             in >> energy;
 
             if ((rho < 1.0E-16) || (T < 1000.0)) {
-                printf("(%d, %d): rho and T are too small. k = 0\n", i, j);
+                // printf("(%d, %d): rho and T are too small. k = 0\n", i, j);
                 kappa_equ(i, j) = 0.0;
                 lambda_equ(i, j) = 1.0E12;
                 Q_equ(i, j) = 0.0;
 
-                out << 0.0 << " ";
+                out << x << " " << y << " " << 0.0 << "\n";
                 continue;
             }
         
@@ -81,10 +84,9 @@ void fill_data(LinearMatrix &kappa_equ, LinearMatrix &lambda_equ, LinearMatrix &
             lambda_equ(i, j) = 1.0 / kap;
             Q_equ(i, j) = (3.0 / c) * L_scale * L_scale * cooling_function(rho, T); 
 
-            printf("(%d, %d): k = %.6f, q = %.6f\n", i, j, kap, Q_equ(i, j));
-            out << cooling_function(rho, T) << " ";
+            // printf("(%d, %d): k = %.6f, q = %.6f\n", i, j, kap, Q_equ(i, j));
+            out << x << " " << y << " " << cooling_function(rho, T) << "\n";
         }
-        out << "\n";
     }
 }
 
@@ -96,6 +98,8 @@ int main() {
     LinearMatrix m(NX, NY), k(NX, NY), lamb(NX, NY), Q(NX, NY);
 
     fill_data(k, lamb, Q);
+
+    std::cout << cooling_function( exp(-3.707162E01), exp(6.907755E+00) ) << "\n";
 
     // double x = 0.0, y = 0.0;
     // for (size_t i = 0; i < m.rows();    ++i)
@@ -118,10 +122,10 @@ int main() {
     //     m(i, m.size() - 1) = 0.0; 
     // }
 
-    // double start = omp_get_wtime();
-    // helmholtz::seidel_third_boundary(m, lamb, k, Q, 1.0E-4, 10000);
-    // double end = omp_get_wtime();
+    double start = omp_get_wtime();
+    helmholtz::seidel_third_boundary(m, lamb, k, Q, 1.0E-4, 10000);
+    double end = omp_get_wtime();
 
-    // printf("Time: %f s\n", end - start);
+    printf("Time: %f s\n", end - start);
     return 0;
 }
