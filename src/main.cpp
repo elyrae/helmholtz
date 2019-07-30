@@ -9,10 +9,15 @@
 #include "helmholtz.h"
 #include "linear_matrix.h"
 
-double  kappa(const double, const double) { return 1.0; }
-double lambda(const double x, const double y) { return 1.0 / kappa(x, y); }
+double kp(const double x, const double y) {
+    return 1.0E-6;
+}
+
 double source(const double x, const double y) {
-    return   pow(M_E,-50*(pow(x,2) + pow(-0.5 + y,2)));
+    return (-2*pow(-1 + y,2)*pow(y,2) + 12*x*pow(-1 + y,2)*pow(y,2) + pow(x,3)*(4 - 2*(-4 + y)*(-1 + y)*y*(3 + y)) + 
+   pow(x,4)*(-2 + (-4 + y)*(-1 + y)*y*(3 + y)) + pow(x,2)*(-2 - (-1 + y)*y*(12 + 11*(-1 + y)*y)) );
+    // return (-4799 + 10000*x - 10000*pow(x,2) + 10000*y - 10000*pow(y,2))/pow(M_E,50*(pow(-0.5 + x,2) + pow(-0.5 + y,2))); 
+    // pow(M_E,-50*(pow(x,2) + pow(-0.5 + y,2)));
 }
 
 double k(const double T)
@@ -41,10 +46,6 @@ double b(const double T)
 
 double cooling_function(const double D, const double T)
 {
-    // const double i = 1.0;
-
-    // lg L = k(T)*log10(i*rho) + b(T)
-    // return (k(T)*log10(D) + b(T))*log(10.0); // pow(k(T)*log10(i*rho) + b(T), 10.0);
     return exp( (k(T)*log10(D) + b(T))*log(10.0) );
 }
 
@@ -52,9 +53,12 @@ void fill_data(LinearMatrix &kappa_equ, LinearMatrix &lambda_equ, LinearMatrix &
 {
     const std::string datafile = "dataLukin.dat";
     std::ifstream in(datafile);
-    std::ofstream out("calculated.txt");
+    
+    std::ofstream out_kappa("kappa.txt");
+    std::ofstream out_lambda("lambda.txt");
+    std::ofstream out_Q("Q.txt");
 
-    const double sigma = 5.67E-5;             // Erg / s / cm^s / K^4
+    const double sigma = 5.67E-5;             // Erg / s / cm^2 / K^4
     const double R_sun = 6.957E10;            // cm
     const double c     = 299792458.0 * 100.0; // cm / s 
 
@@ -69,25 +73,47 @@ void fill_data(LinearMatrix &kappa_equ, LinearMatrix &lambda_equ, LinearMatrix &
             in >> T;
             in >> energy;
 
-            if ((rho < 1.0E-16) || (T < 1000.0)) {
-                // printf("(%d, %d): rho and T are too small. k = 0\n", i, j);
-                kappa_equ(i, j) = 0.0;
-                lambda_equ(i, j) = 1.0E12;
-                Q_equ(i, j) = 0.0;
+            if ((rho < 1.0E-14) || (T < 1000.0)) {
+                kap = 1.0E-15;
 
-                out << x << " " << y << " " << 0.0 << "\n";
-                continue;
-            }
-        
-            kap = L_scale * cooling_function(rho, T) / (4.0*sigma*T*T*T*T);
-            kappa_equ(i, j)  = 3.0 * kap;
-            lambda_equ(i, j) = 1.0 / kap;
-            Q_equ(i, j) = (3.0 / c) * L_scale * L_scale * cooling_function(rho, T); 
+                kappa_equ(i, j) = 3.0 * kap;
+                lambda_equ(i, j) = 1.0E15;
+                Q_equ(i, j)     = 3.0 * kap * L_scale * energy; // 0.0;
+            } 
+            else {
+                kap = L_scale * cooling_function(rho, T) / (4.0*sigma*T*T*T*T);
 
-            // printf("(%d, %d): k = %.6f, q = %.6f\n", i, j, kap, Q_equ(i, j));
-            out << x << " " << y << " " << cooling_function(rho, T) << "\n";
+                kappa_equ(i, j)  =  3.0 * kap;
+                lambda_equ(i, j) = (1.0 / kap);
+                Q_equ(i, j) = 3.0 * kap * L_scale * energy; // (3.0 / c) * L_scale * L_scale * cooling_function(rho, T); 
+            }    
+
+            out_kappa  << x << " " << y << " " << kappa_equ(i, j)  << "\n";
+            out_lambda << x << " " << y << " " << lambda_equ(i, j) << "\n";
+            out_Q      << x << " " << y << " " << Q_equ(i, j) << "\n";
         }
     }
+}
+
+double sol(const double x, const double y)
+{
+    return x*x*y*y*(1.0 - x)*(1.0 - x)*(1.0 - y)*(1.0 - y); 
+    // pow(M_E, -50*(pow(-0.5 + x,2) + pow(-0.5 + y,2)));
+}
+
+void show_error(const LinearMatrix &m, const size_t NX, const size_t NY, const double hx, const double hy)
+{
+    double max = 0.0, x = 0.0, y = 0.0;
+    for (size_t i = 0; i < NX; ++i)
+    for (size_t j = 0; j < NY; ++j) {
+        x = i*hx;
+        y = j*hy;
+
+        if ( fabs(m(i, j) - sol(x, y)) > max )
+            max = fabs(m(i, j) - sol(x, y));
+    }
+
+    std::cout << "err: " << max << "\n";
 }
 
 int main() {
@@ -99,32 +125,27 @@ int main() {
 
     fill_data(k, lamb, Q);
 
-    std::cout << cooling_function( exp(-3.707162E01), exp(6.907755E+00) ) << "\n";
+    double kap = 0.0, x = 0.0, y = 0.0;
+    for (size_t i = 0; i < NX; ++i)
+    for (size_t j = 0; j < NY; ++j) {
+        x = i*hx;
+        y = j*hy;
 
-    // double x = 0.0, y = 0.0;
-    // for (size_t i = 0; i < m.rows();    ++i)
-    // for (size_t j = 0; j < m.columns(); ++j) {
-    //     x = i*hx;
-    //     y = j*hy;
+        // kap = kp(x, y);
+        k(i, j)    = 1.0; // 3.0 * kap;
+        lamb(i, j) = 1.0; //1.0 / kap;
+        Q(i, j) = source(x, y);
 
-    //     k(i, j)    = kappa(x, y);
-    //     lamb(i, j) = lambda(x, y);
-    //     Q(i, j)    = source(x, y);
-    // }
-
-    // for (size_t i = 0; i < m.rows(); ++i) {
-    //     // x = i*h;
-    //     // y = i*h;
-
-    //     m(0,            i) = 0.0;
-    //     m(m.size() - 1, i) = 0.0;
-    //     m(i,            0) = 0.0;
-    //     m(i, m.size() - 1) = 0.0; 
-    // }
+        // Q(NX/2, NY/2) = 3.0 * kp(NX/2, NY/2) * 1.0;
+    }
 
     double start = omp_get_wtime();
-    helmholtz::seidel_third_boundary(m, lamb, k, Q, 1.0E-4, 10000);
+    helmholtz::seidel_third_boundary(m, lamb, k, Q, 1.0E-6, 500000);
     double end = omp_get_wtime();
+
+    // show_error(m, NX, NY, hx, hy);
+    // const std::string filename = "post";
+    // write_solution_vtk(filename + ".txt", m, NX, NY);
 
     printf("Time: %f s\n", end - start);
     return 0;

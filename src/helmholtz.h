@@ -9,8 +9,6 @@ namespace helmholtz {
 
     void jacobi_first_boundary(LinearMatrix& m, const ddFunction lamb, const ddFunction k, const ddFunction Q, 
                                const double err = 1.0E-4, const size_t max_iterations = 100);
-    // void seidel_third_boundary(LinearMatrix& m, const ddFunction lamb, const ddFunction k, const ddFunction Q, 
-    //                            const double err = 1.0E-4, const size_t max_iterations = 100);
     void seidel_third_boundary(LinearMatrix& m, const LinearMatrix &lamb, const LinearMatrix &k, const LinearMatrix &Q, 
                                const double err = 1.0E-4, const size_t max_iterations = 100);
 
